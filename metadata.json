@@ -1,0 +1,5 @@
+{
+  "name": "Codi Medicament Call Simulator",
+  "description": "Plataforma de simulación de entrevistas de conciliación farmacéutica con IA en tiempo real para residentes.",
+  "requestFramePermissions": ["microphone"]
+}
