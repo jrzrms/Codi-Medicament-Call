@@ -26,6 +26,7 @@ import { AudioStreamer, MicRecorder } from './services/audio';
 import { GoogleGenAI, Modality } from '@google/genai';
 import { evaluateSimulation } from './services/evaluation';
 import ReactMarkdown from 'react-markdown';
+import scenariosData from './data/scenarios.json';
 
 // --- Components ---
 
@@ -126,12 +127,11 @@ export default function App() {
     fetchHistory();
   }, []);
 
-  const fetchScenarios = async () => {
-    const res = await fetch('/api/scenarios');
-    const data = await res.json();
-    setScenarios(data);
-  };
-
+const fetchScenarios = () => {
+  // Ya no hace falta async/await ni fetch
+  // scenariosData es el contenido de tu JSON local
+  setScenarios(scenariosData as Scenario[]);
+};
   const fetchHistory = async () => {
     const res = await fetch('/api/history');
     const data = await res.json();
