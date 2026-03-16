@@ -127,10 +127,10 @@ export default function App() {
     fetchHistory();
   }, []);
 
-  const fetchScenarios = async () => {
-    const res = await fetch('/api/scenarios');
-    const data = await res.json();
-    setScenarios(data);
+  const fetchScenarios = () => {
+  // Ya no hace falta async/await ni fetch
+  // scenariosData es el contenido de tu JSON local
+  setScenarios(scenariosData as Scenario[]);
   };
 
   const fetchHistory = async () => {
