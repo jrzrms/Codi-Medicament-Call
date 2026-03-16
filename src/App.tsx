@@ -16,7 +16,9 @@ import {
   Languages,
   User,
   Zap,
-  ArrowLeft
+  ArrowLeft,
+  Target,
+  Pill
 } from 'lucide-react';
 import { Scenario, Simulation, EvaluationResult } from './types';
 import { cn, formatTime } from './lib/utils';
@@ -153,7 +155,9 @@ export default function App() {
       Velocidad de habla: ${selectedScenario.speaking_speed}.
       
       Contexto clínico: ${selectedScenario.description}.
-      Medicación: ${selectedScenario.medication}.
+      Medicación relacionada: ${selectedScenario.medication}.
+      Medicación habitual: ${selectedScenario.usual_medication}.
+      Objetivos de la entrevista (para tu conocimiento): ${selectedScenario.objectives}.
       Problemas (PRM): ${selectedScenario.prm}.
       
       Instrucciones de personalidad:
@@ -224,7 +228,7 @@ export default function App() {
     const callDuration = timer;
 
     try {
-      const evalResult = await evaluateSimulation(fullTranscript, selectedScenario?.description || '');
+      const evalResult = await evaluateSimulation(fullTranscript, selectedScenario);
       setCurrentEvaluation(evalResult);
       
       // Save to DB
@@ -293,6 +297,8 @@ export default function App() {
     gender: 'Masculino',
     language: 'Español',
     medication: '',
+    usual_medication: '',
+    objectives: '',
     prm: '',
     tips: '',
     speaking_speed: 'Normal'
@@ -498,10 +504,28 @@ export default function App() {
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <label className="text-xs font-bold text-gray-400 uppercase">Medicación</label>
+                          <label className="text-xs font-bold text-gray-400 uppercase">Medicación Relacionada con el Ingreso</label>
                           <input 
                             value={newScenario.medication}
                             onChange={e => setNewScenario({...newScenario, medication: e.target.value})}
+                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:border-violet-500 outline-none" 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-gray-400 uppercase">Medicación Habitual (5-10 fármacos)</label>
+                          <textarea 
+                            rows={3}
+                            value={newScenario.usual_medication}
+                            onChange={e => setNewScenario({...newScenario, usual_medication: e.target.value})}
+                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:border-violet-500 outline-none" 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-gray-400 uppercase">Objetivos de la Entrevista</label>
+                          <textarea 
+                            rows={3}
+                            value={newScenario.objectives}
+                            onChange={e => setNewScenario({...newScenario, objectives: e.target.value})}
                             className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm focus:border-violet-500 outline-none" 
                           />
                         </div>
@@ -534,8 +558,51 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
-              className="max-w-4xl mx-auto"
+              className="max-w-4xl mx-auto space-y-6"
             >
+              {/* Briefing Section at the top */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <motion.div 
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm"
+                >
+                  <h4 className="text-[10px] font-bold text-violet-600 uppercase tracking-wider flex items-center gap-2 mb-3">
+                    <Target className="w-3 h-3" />
+                    Objetivos de la Entrevista
+                  </h4>
+                  <div className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                    {selectedScenario.objectives || 'No definidos'}
+                  </div>
+                </motion.div>
+                <motion.div 
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm space-y-4"
+                >
+                  <div>
+                    <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-2 mb-2">
+                      <Pill className="w-3 h-3" />
+                      Medicación Actual (Habitual)
+                    </h4>
+                    <div className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                      {selectedScenario.usual_medication || 'No definida'}
+                    </div>
+                  </div>
+                  {selectedScenario.medication && (
+                    <div className="pt-4 border-t border-gray-100">
+                      <h4 className="text-[10px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-2 mb-2">
+                        <Zap className="w-3 h-3" />
+                        Relacionada con el Ingreso
+                      </h4>
+                      <div className="text-sm text-gray-600 leading-relaxed">
+                        {selectedScenario.medication}
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              </div>
+
               <div className="bg-gray-50 rounded-3xl overflow-hidden border border-gray-200 shadow-2xl">
                 <div className="p-8 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-violet-600/10 to-transparent">
                   <div className="flex items-center gap-4">
@@ -612,22 +679,6 @@ export default function App() {
                     ))}
                     {transcript.length === 0 && <p className="text-gray-300 italic text-sm">Esperando interacción...</p>}
                   </div>
-                </div>
-              </div>
-              
-              {/* Clinical Info Sidebar/Card */}
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
-                  <h5 className="text-emerald-600 font-bold text-xs uppercase tracking-widest mb-4">Medicación Actual</h5>
-                  <p className="text-sm text-gray-800 leading-relaxed">{selectedScenario.medication}</p>
-                </div>
-                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
-                  <h5 className="text-violet-600 font-bold text-xs uppercase tracking-widest mb-4">Objetivos de la Entrevista</h5>
-                  <ul className="text-sm text-gray-600 space-y-2">
-                    <li className="flex items-start gap-2"><ChevronRight className="w-4 h-4 text-violet-500 shrink-0 mt-0.5" /> Confirmar comprensión del alta</li>
-                    <li className="flex items-start gap-2"><ChevronRight className="w-4 h-4 text-violet-500 shrink-0 mt-0.5" /> Detectar posibles PRM</li>
-                    <li className="flex items-start gap-2"><ChevronRight className="w-4 h-4 text-violet-500 shrink-0 mt-0.5" /> Validar receta electrónica</li>
-                  </ul>
                 </div>
               </div>
             </motion.div>

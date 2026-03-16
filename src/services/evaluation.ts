@@ -3,16 +3,22 @@ import { EvaluationResult } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
-export async function evaluateSimulation(transcript: string, scenarioDetails: string): Promise<EvaluationResult> {
+export async function evaluateSimulation(transcript: string, scenario: any): Promise<EvaluationResult> {
   const response = await ai.models.generateContent({
     model: "gemini-3.1-pro-preview",
     contents: `
       Evalúa la siguiente entrevista de conciliación de medicación realizada por un farmacéutico residente.
       
-      Escenario: ${scenarioDetails}
+      Título del Escenario: ${scenario.title}
+      Contexto clínico: ${scenario.description}
+      Medicación relacionada: ${scenario.medication}
+      Medicación habitual: ${scenario.usual_medication}
+      Objetivos específicos: ${scenario.objectives}
+      Problema (PRM) a detectar: ${scenario.prm}
+      
       Transcripción: ${transcript}
       
-      Debes devolver un JSON con la siguiente estructura:
+      Debes evaluar si el farmacéutico ha cumplido los objetivos específicos planteados.
       {
         "checklist": {
           "presentation": boolean (se ha presentado correctamente),

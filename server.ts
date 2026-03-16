@@ -18,11 +18,11 @@ async function startServer() {
   });
 
   app.post("/api/scenarios", (req, res) => {
-    const { title, description, patient_profile, gender, language, medication, prm, tips, speaking_speed } = req.body;
+    const { title, description, patient_profile, gender, language, medication, usual_medication, objectives, prm, tips, speaking_speed } = req.body;
     const info = db.prepare(`
-      INSERT INTO scenarios (title, description, patient_profile, gender, language, medication, prm, tips, speaking_speed)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(title, description, patient_profile, gender, language, medication, prm, tips, speaking_speed);
+      INSERT INTO scenarios (title, description, patient_profile, gender, language, medication, usual_medication, objectives, prm, tips, speaking_speed)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(title, description, patient_profile, gender, language, medication, usual_medication, objectives, prm, tips, speaking_speed);
     res.json({ id: info.lastInsertRowid });
   });
 

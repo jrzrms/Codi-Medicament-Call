@@ -6,6 +6,8 @@ export interface Scenario {
   gender: 'Masculino' | 'Femenino';
   language: 'Español' | 'Catalán';
   medication: string;
+  usual_medication: string;
+  objectives: string;
   prm: string;
   tips: string;
   speaking_speed: 'Lento' | 'Normal' | 'Rápido';

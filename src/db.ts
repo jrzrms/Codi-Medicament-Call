@@ -13,6 +13,8 @@ db.exec(`
     gender TEXT NOT NULL, -- 'Masculino' | 'Femenino'
     language TEXT NOT NULL, -- 'Español' | 'Catalán'
     medication TEXT NOT NULL,
+    usual_medication TEXT,
+    objectives TEXT,
     prm TEXT NOT NULL, -- Problemas Relacionados con los Medicamentos
     tips TEXT NOT NULL,
     speaking_speed TEXT DEFAULT 'Normal' -- 'Lento' | 'Normal' | 'Rápido'
@@ -58,6 +60,17 @@ const columns = tableInfo.map(c => c.name);
     // Remove old rating column if it exists (SQLite doesn't support DROP COLUMN easily, so we just leave it or ignore it)
   }
 
+// Migration: Ensure scenarios table has new columns
+const scenarioTableInfo = db.prepare("PRAGMA table_info(scenarios)").all() as any[];
+const scenarioColumns = scenarioTableInfo.map(c => c.name);
+
+if (!scenarioColumns.includes('usual_medication')) {
+  db.exec(`
+    ALTER TABLE scenarios ADD COLUMN usual_medication TEXT;
+    ALTER TABLE scenarios ADD COLUMN objectives TEXT;
+  `);
+}
+
 // Seed initial scenarios from JSON file
 import initialScenarios from './data/scenarios.json' assert { type: 'json' };
 
@@ -65,8 +78,14 @@ const existingScenarios = db.prepare('SELECT title FROM scenarios').all() as { t
 const existingTitles = new Set(existingScenarios.map(s => s.title));
 
 const insert = db.prepare(`
-  INSERT INTO scenarios (title, description, patient_profile, gender, language, medication, prm, tips, speaking_speed)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  INSERT INTO scenarios (title, description, patient_profile, gender, language, medication, usual_medication, objectives, prm, tips, speaking_speed)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+const update = db.prepare(`
+  UPDATE scenarios 
+  SET description = ?, patient_profile = ?, gender = ?, language = ?, medication = ?, usual_medication = ?, objectives = ?, prm = ?, tips = ?, speaking_speed = ?
+  WHERE title = ?
 `);
 
 for (const s of initialScenarios) {
@@ -77,10 +96,26 @@ for (const s of initialScenarios) {
       s.patient_profile, 
       s.gender, 
       s.language, 
-      s.medication, 
+      s.medication,
+      s.usual_medication,
+      s.objectives,
       s.prm, 
       s.tips, 
       s.speaking_speed
+    );
+  } else {
+    update.run(
+      s.description, 
+      s.patient_profile, 
+      s.gender, 
+      s.language, 
+      s.medication,
+      s.usual_medication,
+      s.objectives,
+      s.prm, 
+      s.tips, 
+      s.speaking_speed,
+      s.title
     );
   }
 }
