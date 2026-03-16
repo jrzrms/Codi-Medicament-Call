@@ -1,6 +1,7 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
+import fs from "fs";
 import db from "./src/db.ts";
 import nodemailer from "nodemailer";
 import { google } from "googleapis";
@@ -13,8 +14,30 @@ async function startServer() {
 
   // API Routes
   app.get("/api/scenarios", (req, res) => {
-    const scenarios = db.prepare("SELECT * FROM scenarios").all();
-    res.json(scenarios);
+    try {
+      const scenarios = db.prepare("SELECT * FROM scenarios").all();
+      if (scenarios.length > 0) {
+        return res.json(scenarios);
+      }
+    } catch (error) {
+      console.error("Database error fetching scenarios:", error);
+    }
+
+    // Fallback to JSON file if DB is empty or fails (common on read-only platforms like Vercel)
+    const scenariosPath = path.resolve(process.cwd(), 'data', 'scenarios.json');
+    try {
+      const data = fs.readFileSync(scenariosPath, 'utf8');
+      const initialScenarios = JSON.parse(data);
+      // Map JSON structure to match DB structure (adding IDs)
+      const mappedScenarios = initialScenarios.map((s: any, index: number) => ({
+        id: index + 1,
+        ...s
+      }));
+      res.json(mappedScenarios);
+    } catch (error) {
+      console.error("Error loading fallback scenarios:", error);
+      res.json([]);
+    }
   });
 
   app.post("/api/scenarios", (req, res) => {
