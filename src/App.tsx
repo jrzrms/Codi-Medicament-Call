@@ -127,15 +127,14 @@ export default function App() {
     fetchHistory();
   }, []);
 
-const fetchScenarios = () => {
-  // Ya no hace falta async/await ni fetch
-  // scenariosData es el contenido de tu JSON local
-  setScenarios(scenariosData as Scenario[]);
-};
-  const fetchHistory = async () => {
-    const res = await fetch('/api/history');
-    const data = await res.json();
-    setHistory(data);
+  const fetchScenarios = () => {
+    // Carga los escenarios directamente del JSON local
+    setScenarios(scenariosData as Scenario[]);
+  };
+
+  const fetchHistory = () => {
+    // Sin backend, iniciamos con un historial vacío
+    setHistory([]);
   };
 
   const startCall = async () => {
@@ -147,7 +146,9 @@ const fetchScenarios = () => {
     setTranscript([]);
     await audioStreamer.current.start();
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    // Importante: Asegúrate de que estás usando import.meta.env si estás en Vite
+    // Si da error, cambia process.env.GEMINI_API_KEY por import.meta.env.VITE_GEMINI_API_KEY
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY });
     
     const systemPrompt = `
       Actúa como un ${selectedScenario.patient_profile} de ${selectedScenario.gender === 'Masculino' ? 'edad avanzada' : 'edad avanzada'}.
@@ -228,23 +229,21 @@ const fetchScenarios = () => {
     const callDuration = timer;
 
     try {
-      const evalResult = await evaluateSimulation(fullTranscript, selectedScenario);
+      const evalResult = await evaluateSimulation(fullTranscript, selectedScenario!);
       setCurrentEvaluation(evalResult);
       
-      // Save to DB
-      const simRes = await fetch('/api/simulations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          scenario_id: selectedScenario?.id,
-          transcript: fullTranscript,
-          evaluation: evalResult,
-          score: evalResult.score
-        })
-      });
-      const simData = await simRes.json();
-      setCurrentSimulationId(simData.id);
-      fetchHistory();
+      // Guardar en el historial local (en memoria) en lugar de hacer fetch a la API
+      const newSimulation: Simulation = {
+        id: Date.now(), // ID temporal
+        scenario_id: selectedScenario?.id || 0,
+        scenario_title: selectedScenario?.title || 'Simulación',
+        timestamp: new Date().toISOString(),
+        score: evalResult.score
+      };
+      
+      setHistory(prev => [newSimulation, ...prev]);
+      setCurrentSimulationId(newSimulation.id);
+      
     } catch (error) {
       console.error("Evaluation failed", error);
     } finally {
@@ -255,23 +254,13 @@ const fetchScenarios = () => {
   const submitSurvey = async () => {
     if (!currentSimulationId || !selectedScenario) return;
     setIsSubmittingSurvey(true);
-    try {
-      await fetch('/api/survey', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          simulation_id: currentSimulationId,
-          ...surveyData,
-          duration: timer,
-          scenario_title: selectedScenario.title
-        })
-      });
+    
+    // Simulamos un retraso de red y mostramos éxito
+    // Ya que no hay backend para guardar la encuesta
+    setTimeout(() => {
       setSurveySubmitted(true);
-    } catch (error) {
-      console.error("Survey submission failed", error);
-    } finally {
       setIsSubmittingSurvey(false);
-    }
+    }, 1000);
   };
 
   useEffect(() => {
@@ -304,28 +293,29 @@ const fetchScenarios = () => {
     speaking_speed: 'Normal'
   });
 
-  const handleAddScenario = async (e: React.FormEvent) => {
+  const handleAddScenario = (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/api/scenarios', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newScenario)
+    
+    // Añadimos un ID temporal al nuevo escenario
+    const scenarioToAdd: Scenario = {
+      ...(newScenario as Scenario),
+      id: Date.now() 
+    };
+
+    // Actualizamos el estado local en lugar de enviar al servidor
+    setScenarios(prev => [...prev, scenarioToAdd]);
+    setIsAddingScenario(false);
+    setNewScenario({
+      title: '',
+      description: '',
+      patient_profile: 'Paciente',
+      gender: 'Masculino',
+      language: 'Español',
+      medication: '',
+      prm: '',
+      tips: '',
+      speaking_speed: 'Normal'
     });
-    if (res.ok) {
-      setIsAddingScenario(false);
-      fetchScenarios();
-      setNewScenario({
-        title: '',
-        description: '',
-        patient_profile: 'Paciente',
-        gender: 'Masculino',
-        language: 'Español',
-        medication: '',
-        prm: '',
-        tips: '',
-        speaking_speed: 'Normal'
-      });
-    }
   };
 
   return (
@@ -970,7 +960,7 @@ const fetchScenarios = () => {
                   </div>
                 ))}
                 {history.length === 0 && (
-                  <div className="text-center py-20 text-white/20">
+                  <div className="text-center py-20 text-black/20">
                     <History className="w-12 h-12 mx-auto mb-4 opacity-20" />
                     <p>No hay simulaciones registradas aún.</p>
                   </div>
