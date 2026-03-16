@@ -26,7 +26,6 @@ import { AudioStreamer, MicRecorder } from './services/audio';
 import { GoogleGenAI, Modality } from '@google/genai';
 import { evaluateSimulation } from './services/evaluation';
 import ReactMarkdown from 'react-markdown';
-import scenariosData from './scenarios.json';
 
 // --- Components ---
 
@@ -127,14 +126,16 @@ export default function App() {
     fetchHistory();
   }, []);
 
-  const fetchScenarios = () => {
-    // Carga los escenarios directamente del JSON local
-    setScenarios(scenariosData as Scenario[]);
+  const fetchScenarios = async () => {
+    const res = await fetch('/api/scenarios');
+    const data = await res.json();
+    setScenarios(data);
   };
 
-  const fetchHistory = () => {
-    // Sin backend, iniciamos con un historial vacío
-    setHistory([]);
+  const fetchHistory = async () => {
+    const res = await fetch('/api/history');
+    const data = await res.json();
+    setHistory(data);
   };
 
   const startCall = async () => {
@@ -146,9 +147,7 @@ export default function App() {
     setTranscript([]);
     await audioStreamer.current.start();
 
-    // Importante: Asegúrate de que estás usando import.meta.env si estás en Vite
-    // Si da error, cambia process.env.GEMINI_API_KEY por import.meta.env.VITE_GEMINI_API_KEY
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
     
     const systemPrompt = `
       Actúa como un ${selectedScenario.patient_profile} de ${selectedScenario.gender === 'Masculino' ? 'edad avanzada' : 'edad avanzada'}.
@@ -229,21 +228,23 @@ export default function App() {
     const callDuration = timer;
 
     try {
-      const evalResult = await evaluateSimulation(fullTranscript, selectedScenario!);
+      const evalResult = await evaluateSimulation(fullTranscript, selectedScenario);
       setCurrentEvaluation(evalResult);
       
-      // Guardar en el historial local (en memoria) en lugar de hacer fetch a la API
-      const newSimulation: Simulation = {
-        id: Date.now(), // ID temporal
-        scenario_id: selectedScenario?.id || 0,
-        scenario_title: selectedScenario?.title || 'Simulación',
-        timestamp: new Date().toISOString(),
-        score: evalResult.score
-      };
-      
-      setHistory(prev => [newSimulation, ...prev]);
-      setCurrentSimulationId(newSimulation.id);
-      
+      // Save to DB
+      const simRes = await fetch('/api/simulations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scenario_id: selectedScenario?.id,
+          transcript: fullTranscript,
+          evaluation: evalResult,
+          score: evalResult.score
+        })
+      });
+      const simData = await simRes.json();
+      setCurrentSimulationId(simData.id);
+      fetchHistory();
     } catch (error) {
       console.error("Evaluation failed", error);
     } finally {
@@ -254,13 +255,23 @@ export default function App() {
   const submitSurvey = async () => {
     if (!currentSimulationId || !selectedScenario) return;
     setIsSubmittingSurvey(true);
-    
-    // Simulamos un retraso de red y mostramos éxito
-    // Ya que no hay backend para guardar la encuesta
-    setTimeout(() => {
+    try {
+      await fetch('/api/survey', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          simulation_id: currentSimulationId,
+          ...surveyData,
+          duration: timer,
+          scenario_title: selectedScenario.title
+        })
+      });
       setSurveySubmitted(true);
+    } catch (error) {
+      console.error("Survey submission failed", error);
+    } finally {
       setIsSubmittingSurvey(false);
-    }, 1000);
+    }
   };
 
   useEffect(() => {
@@ -293,29 +304,28 @@ export default function App() {
     speaking_speed: 'Normal'
   });
 
-  const handleAddScenario = (e: React.FormEvent) => {
+  const handleAddScenario = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Añadimos un ID temporal al nuevo escenario
-    const scenarioToAdd: Scenario = {
-      ...(newScenario as Scenario),
-      id: Date.now() 
-    };
-
-    // Actualizamos el estado local en lugar de enviar al servidor
-    setScenarios(prev => [...prev, scenarioToAdd]);
-    setIsAddingScenario(false);
-    setNewScenario({
-      title: '',
-      description: '',
-      patient_profile: 'Paciente',
-      gender: 'Masculino',
-      language: 'Español',
-      medication: '',
-      prm: '',
-      tips: '',
-      speaking_speed: 'Normal'
+    const res = await fetch('/api/scenarios', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newScenario)
     });
+    if (res.ok) {
+      setIsAddingScenario(false);
+      fetchScenarios();
+      setNewScenario({
+        title: '',
+        description: '',
+        patient_profile: 'Paciente',
+        gender: 'Masculino',
+        language: 'Español',
+        medication: '',
+        prm: '',
+        tips: '',
+        speaking_speed: 'Normal'
+      });
+    }
   };
 
   return (
@@ -960,7 +970,7 @@ export default function App() {
                   </div>
                 ))}
                 {history.length === 0 && (
-                  <div className="text-center py-20 text-black/20">
+                  <div className="text-center py-20 text-white/20">
                     <History className="w-12 h-12 mx-auto mb-4 opacity-20" />
                     <p>No hay simulaciones registradas aún.</p>
                   </div>
