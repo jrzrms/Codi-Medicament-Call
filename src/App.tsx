@@ -26,7 +26,7 @@ import { AudioStreamer, MicRecorder } from './services/audio';
 import { GoogleGenAI, Modality } from '@google/genai';
 import { evaluateSimulation } from './services/evaluation';
 import ReactMarkdown from 'react-markdown';
-import scenariosData from './data/scenarios.json';
+import scenariosData from './scenarios.json';
 
 // --- Components ---
 
