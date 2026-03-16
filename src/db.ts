@@ -1,7 +1,13 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-const db = new Database('pharma_call.db');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const dbPath = path.resolve(process.cwd(), 'pharma_call.db');
+const db = new Database(dbPath);
 
 // Initialize schema
 db.exec(`
@@ -72,7 +78,14 @@ if (!scenarioColumns.includes('usual_medication')) {
 }
 
 // Seed initial scenarios from JSON file
-import initialScenarios from './data/scenarios.json' assert { type: 'json' };
+const scenariosPath = path.resolve(process.cwd(), 'data', 'scenarios.json');
+let initialScenarios = [];
+try {
+  const data = fs.readFileSync(scenariosPath, 'utf8');
+  initialScenarios = JSON.parse(data);
+} catch (error) {
+  console.error('Error loading initial scenarios:', error);
+}
 
 const existingScenarios = db.prepare('SELECT title FROM scenarios').all() as { title: string }[];
 const existingTitles = new Set(existingScenarios.map(s => s.title));

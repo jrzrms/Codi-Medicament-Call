@@ -1,7 +1,7 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
-import db from "./src/db.js";
+import db from "./src/db.ts";
 import nodemailer from "nodemailer";
 import { google } from "googleapis";
 
