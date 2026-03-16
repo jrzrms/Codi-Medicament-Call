@@ -117,6 +117,7 @@ export default function App() {
   const audioStreamer = useRef(new AudioStreamer());
   const micRecorder = useRef<MicRecorder | null>(null);
   const sessionRef = useRef<any>(null);
+  const isStoppingRef = useRef(false);
 
   useEffect(() => {
     fetchScenarios();
@@ -138,6 +139,7 @@ export default function App() {
   const startCall = async () => {
     if (!selectedScenario) return;
     
+    isStoppingRef.current = false;
     setIsCalling(true);
     setTimer(0);
     setTranscript([]);
@@ -203,12 +205,16 @@ export default function App() {
   };
 
   const stopCall = async () => {
+    if (isStoppingRef.current) return;
+    isStoppingRef.current = true;
+
     setIsCalling(false);
     micRecorder.current?.stop();
     audioStreamer.current.stop();
     sessionRef.current?.close();
 
     // Trigger evaluation
+    setCurrentEvaluation(null);
     setIsEvaluating(true);
     setView('evaluation');
     setSurveySubmitted(false);
@@ -719,9 +725,9 @@ export default function App() {
                         {[
                           { key: 'realism', label: 'Realismo de la Simulación', desc: '¿La voz, las respuestas y el comportamiento se sintieron naturales?' },
                           { key: 'usability', label: 'Usabilidad de la Interfaz', desc: '¿Fue fácil iniciar la llamada y navegar por la aplicación?' },
-                          { key: 'utility', label: 'Utilidad Clínica', desc: '¿Es este escenario relevante para tu práctica diaria?' },
+                          { key: 'utility', label: 'Utilidad Clínica', desc: '¿El paciente simulado te ha planteado problemas reales con sus medicamentos?' },
                           { key: 'feedback_quality', label: 'Calidad del Feedback', desc: '¿El informe de la IA fue preciso y útil para tu aprendizaje?' },
-                          { key: 'added_value', label: 'Valor Añadido', desc: '¿Prefieres este método frente a los tradicionales?' }
+                          { key: 'added_value', label: 'Valoración General', desc: '¿En general, cómo valoras esta llamada para tu formación?' }
                         ].map((pillar) => (
                           <div key={pillar.key} className="space-y-3">
                             <div className="flex justify-between items-end">

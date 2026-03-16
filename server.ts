@@ -128,7 +128,7 @@ async function startServer() {
               <li><strong>Usabilidad de la Interfaz:</strong> ${usability}/10</li>
               <li><strong>Utilidad Clínica:</strong> ${utility}/10</li>
               <li><strong>Calidad del Feedback:</strong> ${feedback_quality}/10</li>
-              <li><strong>Valor Añadido:</strong> ${added_value}/10</li>
+              <li><strong>Valoración General:</strong> ${added_value}/10</li>
             </ul>
             <p><strong>Comentarios:</strong> ${comments || 'Sin comentarios'}</p>
           `
