@@ -1,0 +1,79 @@
+[
+  {
+    "title": "Sangrado Digestivo (Riesgo de Anticoagulación)",
+    "description": "Paciente que acudió a urgencias por melenas (heces negras y pegajosas).",
+    "patient_profile": "Paciente",
+    "gender": "Masculino",
+    "language": "Español",
+    "medication": "Anticoagulantes orales (Sintrom, Apixabán, Rivaroxabán)",
+    "prm": "El paciente está tomando AINEs (como Ibuprofeno) por su cuenta para un dolor de rodilla, lo que ha provocado el sangrado al interactuar con el anticoagulante.",
+    "tips": "Vigilar heces negras, evitar estrictamente AINEs, avisar ante hematomas espontáneos.",
+    "speaking_speed": "Normal"
+  },
+  {
+    "title": "Convulsiones (Falta de Adherencia)",
+    "description": "Ingreso por crisis convulsiva tónico-clónica.",
+    "patient_profile": "Cuidador",
+    "gender": "Femenino",
+    "language": "Catalán",
+    "medication": "Antiepilépticos (Levetiracetam, Valproato)",
+    "prm": "El paciente confiesa que \"se sentía bien\" y decidió dejar de tomar la medicación o reducir la dosis por su cuenta.",
+    "tips": "Importancia de la toma a la misma hora, uso de alarmas, nunca suspender el tratamiento sin supervisión médica.",
+    "speaking_speed": "Rápido"
+  },
+  {
+    "title": "Hiperglicemia (Descompensación Diabética)",
+    "description": "Paciente diabético que ingresa con niveles de glucosa muy elevados.",
+    "patient_profile": "Paciente",
+    "gender": "Femenino",
+    "language": "Español",
+    "medication": "Insulina o Antidiabéticos orales (Metformina, Gliclazida)",
+    "prm": "Error en la técnica de administración de insulina o confusión entre la insulina lenta y la rápida.",
+    "tips": "Revisar técnica de inyección, rotación de zonas, hidratación adecuada y cuidado de los pies.",
+    "speaking_speed": "Lento"
+  },
+  {
+    "title": "Crisis Hipertensiva (Olvido Terapéutico)",
+    "description": "Ingreso por cefalea intensa y tensión arterial de 190/110 mmHg.",
+    "patient_profile": "Paciente",
+    "gender": "Masculino",
+    "language": "Catalán",
+    "medication": "Antihipertensivos (Enalapril, Amlodipino, Losartán)",
+    "prm": "El paciente olvidó llevarse la medicación de viaje o dejó de tomarla porque \"le hacía orinar mucho\" (si toma diuréticos).",
+    "tips": "Dieta baja en sal, registro diario de tensión, evitar la automedicación con antigripales.",
+    "speaking_speed": "Normal"
+  },
+  {
+    "title": "Estreñimiento (Efecto Secundario de Opioides)",
+    "description": "Dolor abdominal agudo y ausencia de deposición durante 5 días tras cirugía.",
+    "patient_profile": "Paciente",
+    "gender": "Femenino",
+    "language": "Español",
+    "medication": "Tramadol u otros opioides para el dolor post-operatorio.",
+    "prm": "El paciente no sabe que el fármaco para el dolor causa estreñimiento y no está siguiendo las pautas dietéticas o laxantes recomendadas.",
+    "tips": "Aumentar fibra, beber mucha agua, actividad física suave.",
+    "speaking_speed": "Normal"
+  },
+  {
+    "title": "Somnolencia y Caídas (Sedación por Psicofármacos)",
+    "description": "Paciente anciano que ingresa tras una caída en casa; presenta mucha sedación diurna.",
+    "patient_profile": "Cuidador",
+    "gender": "Masculino",
+    "language": "Catalán",
+    "medication": "Antipsicóticos (Quetiapina) o Benzodiacepinas.",
+    "prm": "Duplicidad terapéutica (está tomando un fármaco antiguo de casa y el nuevo del hospital que son de la misma familia).",
+    "tips": "Tomar la medicación sedante por la noche, prevención de caídas (quitar alfombras), evitar conducir.",
+    "speaking_speed": "Lento"
+  },
+  {
+    "title": "Bradicardia (Toxicidad por Betabloqueantes)",
+    "description": "Mareos, sensación de desmayo y pulso por debajo de 50 lpm.",
+    "patient_profile": "Paciente",
+    "gender": "Masculino",
+    "language": "Español",
+    "medication": "Bisoprolol o Carvedilol.",
+    "prm": "El paciente ha duplicado la dosis por error al no entender el cambio de marca comercial (confusión entre genérico y marca).",
+    "tips": "Control de pulso, no suspender bruscamente, vigilar mareos al levantarse (hipotensión ortostática).",
+    "speaking_speed": "Normal"
+  }
+]
