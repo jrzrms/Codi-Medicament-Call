@@ -95,7 +95,6 @@ export default function App() {
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
   
-  // Cambiamos a any[] para evitar errores al meter la evaluación completa
   const [history, setHistory] = useState<any[]>([]);
   
   const [filters, setFilters] = useState({ profile: '', gender: '', speed: '', lang: '' });
@@ -239,7 +238,7 @@ export default function App() {
         scenario_title: selectedScenario?.title || 'Simulación',
         timestamp: new Date().toISOString(),
         score: evalResult.score,
-        evaluation: evalResult // Guardamos la evaluación completa
+        evaluation: evalResult
       };
       
       setHistory(prev => {
@@ -261,6 +260,18 @@ export default function App() {
     setIsSubmittingSurvey(true);
   
     setTimeout(() => {
+      // Guardamos la encuesta rellenada en el historial guardado
+      setHistory(prev => {
+        const updatedHistory = prev.map(sim => {
+          if (sim.id === currentSimulationId) {
+            return { ...sim, survey: surveyData };
+          }
+          return sim;
+        });
+        localStorage.setItem('simHistory', JSON.stringify(updatedHistory));
+        return updatedHistory;
+      });
+
       setSurveySubmitted(true);
       setIsSubmittingSurvey(false);
       
@@ -757,15 +768,39 @@ export default function App() {
                     </div>
                   </div>
                   
-                  {/* Survey Form */}
+                  {/* Survey Form o Vista Previa del Guardado */}
                   <div className="bg-gray-50 rounded-3xl p-8 border border-gray-200">
                     <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6">Encuesta de Satisfacción</h4>
                     
                     {surveySubmitted ? (
-                      <div className="text-center py-8">
-                        <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-                        <h5 className="text-xl font-bold text-gray-900 mb-2">¡Gracias por tu feedback!</h5>
-                        <p className="text-gray-500">Tus respuestas nos ayudan a mejorar la herramienta.</p>
+                      <div className="space-y-6">
+                        <div className="text-center py-4 border-b border-gray-200 mb-6">
+                          <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
+                          <h5 className="text-lg font-bold text-gray-900">Evaluación Guardada</h5>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {[
+                            { key: 'realism', label: 'Realismo' },
+                            { key: 'usability', label: 'Usabilidad' },
+                            { key: 'utility', label: 'Utilidad Clínica' },
+                            { key: 'feedback_quality', label: 'Calidad del Feedback' },
+                            { key: 'added_value', label: 'Valoración General' }
+                          ].map(pillar => (
+                            <div key={pillar.key} className="flex justify-between items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                              <span className="text-sm font-bold text-gray-700">{pillar.label}</span>
+                              <span className="text-xl font-black text-violet-600">
+                                {surveyData[pillar.key as keyof typeof surveyData] || '-'}
+                                <span className="text-sm text-gray-400 font-normal">/10</span>
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        {surveyData.comments && (
+                          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mt-4">
+                            <span className="text-xs font-bold text-gray-400 uppercase block mb-2">Comentarios Adicionales</span>
+                            <p className="text-sm text-gray-700 whitespace-pre-wrap">{surveyData.comments}</p>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="space-y-8">
@@ -952,8 +987,19 @@ export default function App() {
                     onClick={() => {
                       if (sim.evaluation) {
                         setCurrentEvaluation(sim.evaluation);
+                        setCurrentSimulationId(sim.id);
+                        
+                        // Si este historial tiene encuesta guardada, la mostramos
+                        if (sim.survey) {
+                          setSurveyData(sim.survey);
+                          setSurveySubmitted(true);
+                        } else {
+                          // Si no la tiene (pruebas antiguas), dejamos que el usuario vote ahora
+                          setSurveyData({ realism: 0, usability: 0, utility: 0, feedback_quality: 0, added_value: 0, comments: '' });
+                          setSurveySubmitted(false);
+                        }
+                        
                         setView('evaluation');
-                        setSurveySubmitted(true);
                       }
                     }}
                     className="bg-gray-50 border border-gray-200 p-6 rounded-2xl flex items-center justify-between hover:border-violet-500 cursor-pointer transition-colors group"
