@@ -128,13 +128,10 @@ export default function App() {
   }, []);
 
   const fetchScenarios = () => {
-  // Ya no hace falta async/await ni fetch
-  // scenariosData es el contenido de tu JSON local
-  setScenarios(scenariosData as Scenario[]);
+    setScenarios(scenariosData as Scenario[]);
   };
 
   const fetchHistory = () => {
-    // Leemos el historial guardado en el navegador del usuario
     const savedHistory = localStorage.getItem('simHistory');
     if (savedHistory) {
       setHistory(JSON.parse(savedHistory));
@@ -152,7 +149,8 @@ export default function App() {
     setTranscript([]);
     await audioStreamer.current.start();
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    const ai = new GoogleGenAI({ apiKey: apiKey! });
     
     const systemPrompt = `
       Actúa como un ${selectedScenario.patient_profile} de ${selectedScenario.gender === 'Masculino' ? 'edad avanzada' : 'edad avanzada'}.
@@ -197,11 +195,9 @@ export default function App() {
           if (msg.serverContent?.modelTurn?.parts?.[0]?.inlineData) {
             audioStreamer.current.playChunk(msg.serverContent.modelTurn.parts[0].inlineData.data);
           }
-          // Handle model transcription
           if (msg.serverContent?.modelTurn?.parts?.[0]?.text) {
              setTranscript(prev => [...prev, { role: 'IA', text: msg.serverContent!.modelTurn!.parts[0].text! }]);
           }
-          // Handle user transcription
           if (msg.serverContent?.inputTranscription?.text && msg.serverContent.inputTranscription.finished) {
              setTranscript(prev => [...prev, { role: 'Usuario', text: msg.serverContent!.inputTranscription!.text! }]);
           }
@@ -222,7 +218,6 @@ export default function App() {
     audioStreamer.current.stop();
     sessionRef.current?.close();
 
-    // Trigger evaluation
     setCurrentEvaluation(null);
     setIsEvaluating(true);
     setView('evaluation');
@@ -232,7 +227,7 @@ export default function App() {
     const fullTranscript = transcript.map(t => `${t.role}: ${t.text}`).join('\n');
     const callDuration = timer;
 
-  try {
+    try {
       const evalResult = await evaluateSimulation(fullTranscript, selectedScenario!);
       setCurrentEvaluation(evalResult);
       
@@ -244,7 +239,6 @@ export default function App() {
         score: evalResult.score
       };
       
-      // Guardamos en el estado y también en la memoria del navegador
       setHistory(prev => {
         const newHistory = [newSimulation, ...prev];
         localStorage.setItem('simHistory', JSON.stringify(newHistory));
@@ -257,18 +251,16 @@ export default function App() {
     } finally {
       setIsEvaluating(false);
     }
+  }; // <--- ¡Esta es la llave que faltaba para cerrar stopCall!
 
-    const submitSurvey = async () => {
+  const submitSurvey = async () => {
     if (!currentSimulationId || !selectedScenario) return;
     setIsSubmittingSurvey(true);
   
-    // Simulamos guardado de encuesta
     setTimeout(() => {
       setSurveySubmitted(true);
       setIsSubmittingSurvey(false);
       
-      // Esperamos 1.5 segundos para que el usuario lea el "¡Gracias!" 
-      // y luego lo enviamos automáticamente a la pestaña de historial
       setTimeout(() => {
         setView('history');
       }, 1500);
@@ -306,28 +298,27 @@ export default function App() {
     speaking_speed: 'Normal'
   });
 
-  const handleAddScenario = async (e: React.FormEvent) => {
+  const handleAddScenario = (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/api/scenarios', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newScenario)
+    
+    const scenarioToAdd: Scenario = {
+      ...(newScenario as Scenario),
+      id: Date.now() 
+    };
+
+    setScenarios(prev => [...prev, scenarioToAdd]);
+    setIsAddingScenario(false);
+    setNewScenario({
+      title: '',
+      description: '',
+      patient_profile: 'Paciente',
+      gender: 'Masculino',
+      language: 'Español',
+      medication: '',
+      prm: '',
+      tips: '',
+      speaking_speed: 'Normal'
     });
-    if (res.ok) {
-      setIsAddingScenario(false);
-      fetchScenarios();
-      setNewScenario({
-        title: '',
-        description: '',
-        patient_profile: 'Paciente',
-        gender: 'Masculino',
-        language: 'Español',
-        medication: '',
-        prm: '',
-        tips: '',
-        speaking_speed: 'Normal'
-      });
-    }
   };
 
   return (
@@ -972,7 +963,7 @@ export default function App() {
                   </div>
                 ))}
                 {history.length === 0 && (
-                  <div className="text-center py-20 text-white/20">
+                  <div className="text-center py-20 text-black/20">
                     <History className="w-12 h-12 mx-auto mb-4 opacity-20" />
                     <p>No hay simulaciones registradas aún.</p>
                   </div>
