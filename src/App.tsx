@@ -258,26 +258,22 @@ export default function App() {
       setIsEvaluating(false);
     }
 
-  const submitSurvey = async () => {
+    const submitSurvey = async () => {
     if (!currentSimulationId || !selectedScenario) return;
     setIsSubmittingSurvey(true);
-    try {
-      await fetch('/api/survey', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          simulation_id: currentSimulationId,
-          ...surveyData,
-          duration: timer,
-          scenario_title: selectedScenario.title
-        })
-      });
+  
+    // Simulamos guardado de encuesta
+    setTimeout(() => {
       setSurveySubmitted(true);
-    } catch (error) {
-      console.error("Survey submission failed", error);
-    } finally {
       setIsSubmittingSurvey(false);
-    }
+      
+      // Esperamos 1.5 segundos para que el usuario lea el "¡Gracias!" 
+      // y luego lo enviamos automáticamente a la pestaña de historial
+      setTimeout(() => {
+        setView('history');
+      }, 1500);
+      
+    }, 1000);
   };
 
   useEffect(() => {
