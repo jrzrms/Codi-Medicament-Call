@@ -6,7 +6,7 @@ const ai = new GoogleGenAI({ apiKey: apiKey! });
 
 export async function evaluateSimulation(transcript: string, scenario: any): Promise<EvaluationResult> {
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash"
+    model: "gemini-2.5-flash",
     contents: `
       Evalúa la siguiente entrevista de conciliación de medicación realizada por un farmacéutico residente.
       
