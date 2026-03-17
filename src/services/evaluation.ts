@@ -1,11 +1,12 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { EvaluationResult } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+const ai = new GoogleGenAI({ apiKey: apiKey! });
 
 export async function evaluateSimulation(transcript: string, scenario: any): Promise<EvaluationResult> {
   const response = await ai.models.generateContent({
-    model: "gemini-3.1-pro-preview",
+    model: "gemini-2.5-flash"
     contents: `
       Evalúa la siguiente entrevista de conciliación de medicación realizada por un farmacéutico residente.
       
