@@ -232,30 +232,31 @@ export default function App() {
     const fullTranscript = transcript.map(t => `${t.role}: ${t.text}`).join('\n');
     const callDuration = timer;
 
-    try {
-      const evalResult = await evaluateSimulation(fullTranscript, selectedScenario);
+  try {
+      const evalResult = await evaluateSimulation(fullTranscript, selectedScenario!);
       setCurrentEvaluation(evalResult);
       
-      // Save to DB
-      const simRes = await fetch('/api/simulations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          scenario_id: selectedScenario?.id,
-          transcript: fullTranscript,
-          evaluation: evalResult,
-          score: evalResult.score
-        })
+      const newSimulation: Simulation = {
+        id: Date.now(),
+        scenario_id: selectedScenario?.id || 0,
+        scenario_title: selectedScenario?.title || 'Simulación',
+        timestamp: new Date().toISOString(),
+        score: evalResult.score
+      };
+      
+      // Guardamos en el estado y también en la memoria del navegador
+      setHistory(prev => {
+        const newHistory = [newSimulation, ...prev];
+        localStorage.setItem('simHistory', JSON.stringify(newHistory));
+        return newHistory;
       });
-      const simData = await simRes.json();
-      setCurrentSimulationId(simData.id);
-      fetchHistory();
+      setCurrentSimulationId(newSimulation.id);
+      
     } catch (error) {
       console.error("Evaluation failed", error);
     } finally {
       setIsEvaluating(false);
     }
-  };
 
   const submitSurvey = async () => {
     if (!currentSimulationId || !selectedScenario) return;
