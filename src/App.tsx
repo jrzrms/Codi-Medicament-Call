@@ -20,7 +20,7 @@ import {
   Target,
   Pill
 } from 'lucide-react';
-import { Scenario, Simulation, EvaluationResult } from './types';
+import { Scenario, EvaluationResult } from './types';
 import { cn, formatTime } from './lib/utils';
 import { AudioStreamer, MicRecorder } from './services/audio';
 import { GoogleGenAI, Modality } from '@google/genai';
@@ -94,7 +94,10 @@ export default function App() {
   const [view, setView] = useState<'dashboard' | 'simulator' | 'evaluation' | 'history' | 'guides'>('dashboard');
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [selectedScenario, setSelectedScenario] = useState<Scenario | null>(null);
-  const [history, setHistory] = useState<Simulation[]>([]);
+  
+  // Cambiamos a any[] para evitar errores al meter la evaluación completa
+  const [history, setHistory] = useState<any[]>([]);
+  
   const [filters, setFilters] = useState({ profile: '', gender: '', speed: '', lang: '' });
 
   // Simulator State
@@ -225,18 +228,18 @@ export default function App() {
     setSurveyData({ realism: 0, usability: 0, utility: 0, feedback_quality: 0, added_value: 0, comments: '' });
     
     const fullTranscript = transcript.map(t => `${t.role}: ${t.text}`).join('\n');
-    const callDuration = timer;
 
     try {
       const evalResult = await evaluateSimulation(fullTranscript, selectedScenario!);
       setCurrentEvaluation(evalResult);
       
-      const newSimulation: Simulation = {
+      const newSimulation: any = {
         id: Date.now(),
         scenario_id: selectedScenario?.id || 0,
         scenario_title: selectedScenario?.title || 'Simulación',
         timestamp: new Date().toISOString(),
-        score: evalResult.score
+        score: evalResult.score,
+        evaluation: evalResult // Guardamos la evaluación completa
       };
       
       setHistory(prev => {
@@ -251,7 +254,7 @@ export default function App() {
     } finally {
       setIsEvaluating(false);
     }
-  }; // <--- ¡Esta es la llave que faltaba para cerrar stopCall!
+  }; 
 
   const submitSurvey = async () => {
     if (!currentSimulationId || !selectedScenario) return;
@@ -943,8 +946,18 @@ export default function App() {
             >
               <h2 className="text-4xl font-bold mb-12">Historial de Simulaciones</h2>
               <div className="space-y-4">
-                {history.map(sim => (
-                  <div key={sim.id} className="bg-gray-50 border border-gray-200 p-6 rounded-2xl flex items-center justify-between hover:border-gray-300 transition-colors">
+                {history.map((sim: any) => (
+                  <div 
+                    key={sim.id} 
+                    onClick={() => {
+                      if (sim.evaluation) {
+                        setCurrentEvaluation(sim.evaluation);
+                        setView('evaluation');
+                        setSurveySubmitted(true);
+                      }
+                    }}
+                    className="bg-gray-50 border border-gray-200 p-6 rounded-2xl flex items-center justify-between hover:border-violet-500 cursor-pointer transition-colors group"
+                  >
                     <div className="flex items-center gap-6">
                       <div className={cn(
                         "w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl",
@@ -957,7 +970,7 @@ export default function App() {
                         <p className="text-xs text-gray-400">{new Date(sim.timestamp).toLocaleString()}</p>
                       </div>
                     </div>
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-400 hover:text-gray-900">
+                    <button className="p-2 hover:bg-violet-100 rounded-lg transition-colors text-gray-300 group-hover:text-violet-600">
                       <ChevronRight className="w-5 h-5" />
                     </button>
                   </div>
