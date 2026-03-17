@@ -133,10 +133,14 @@ export default function App() {
   setScenarios(scenariosData as Scenario[]);
   };
 
-  const fetchHistory = async () => {
-    const res = await fetch('/api/history');
-    const data = await res.json();
-    setHistory(data);
+  const fetchHistory = () => {
+    // Leemos el historial guardado en el navegador del usuario
+    const savedHistory = localStorage.getItem('simHistory');
+    if (savedHistory) {
+      setHistory(JSON.parse(savedHistory));
+    } else {
+      setHistory([]);
+    }
   };
 
   const startCall = async () => {
